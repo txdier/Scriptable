@@ -7,11 +7,11 @@
 // 天气部份 mod from https://github.com/Enjoyee/Scriptable
 // calendar.js from https://github.com/jjonline/calendar.js
 // const { calendar } = importModule('calendar.js');
-
+const WEATHER_API_KEY = " "; // 替换成你的 WeatherAPI key
 const calendar = calendarFunc();
 const fmLocal = FileManager.local();
 const _config = {
-  apiKey: "", // 彩云天气 key https://caiyunapp.com/api/weather#api
+  // apiKey: "", // 彩云天气 key https://caiyunapp.com/api/weather#api
   emojiUrl:"https://raw.githubusercontent.com/dingdangnao/Scriptable/main/AMEmoji/", //年份emoji的链接地址，要以 / 结尾
   refreshInterval: 10, // 刷新时间--估算(单位：分钟)
   imgRefreshInterval: 120, // 刷新时间--估算(单位：分钟)
@@ -145,128 +145,94 @@ async function renderLockscreenWidget() {
 
   widget.addSpacer(6);
   //////////////////////////
-  // 天气
-  if (weatherInfo && weatherInfo.temperature!=undefined) {
+  // 替换为以下代码：
+if (weatherInfo && weatherInfo.temperature!=undefined) {
+    // 天气信息（单独一行）
     const weatherStack = widget.addStack();
-    // weatherStack.layoutHorizontally()
     weatherStack.centerAlignContent();
-    // weatherStack.addSpacer()
-
+  
     // 天气图标
-    const weatherIcon = getSFSymbol(
-      _config.weatherSFIcos[weatherInfo.weatherIco]
-    );
+    const weatherIcon = getSFSymbol(_config.weatherSFIcos[weatherInfo.weatherIco]);
     let weatherIconWidget = weatherStack.addImage(weatherIcon);
     weatherIconWidget.imageSize = new Size(16, 16);
     weatherIconWidget.centerAlignImage();
-
+  
     // 天气描述
     weatherStack.addSpacer(6);
     let weatherDescValue = _config.weatherDesc[weatherInfo.weatherIco];
     let weatherDescWidget = weatherStack.addText(`${weatherDescValue}`);
     weatherDescWidget.font = Font.blackSystemFont(11);
-
-    // 天气温度
+  
+    // 天气温度（仅显示当前温度）
     weatherStack.addSpacer(6);
-    let weatherTemperatureValue = weatherInfo.temperature;
-    weatherTemperatureValue = `${weatherTemperatureValue}°`;
-    let weatherTemperatureWidget = weatherStack.addText(
-      `${weatherTemperatureValue}`
-    );
+    let weatherTemperatureValue = `${weatherInfo.temperature}°`;
+    let weatherTemperatureWidget = weatherStack.addText(weatherTemperatureValue);
     weatherTemperatureWidget.font = Font.boldRoundedSystemFont(11);
-
-    // 温度范围
-    if (weatherDescValue.length < 3) {
-      weatherStack.addSpacer(6);
-      let thermometerIcon = "thermometer.medium";
-      if (weatherInfo.maxTemperature > 30) {
-        thermometerIcon = "thermometer.high";
-      } else if (weatherInfo.maxTemperature > 15) {
-        thermometerIcon = "thermometer.medium";
-      } else {
-        thermometerIcon = "thermometer.low";
-      }
-      const tRangeIcon = getSFSymbol(thermometerIcon);
-      let tRangeIconWidget = weatherStack.addImage(tRangeIcon);
-      tRangeIconWidget.imageSize = new Size(12, 12);
-      tRangeIconWidget.tintColor = new Color("ffffff", 0.8);
-      weatherStack.addSpacer(2);
-      let tRangeWidget = weatherStack.addText(
-        `${weatherInfo.minTemperature}°~${weatherInfo.maxTemperature}°`
-      );
-      tRangeWidget.font = Font.boldRoundedSystemFont(9);
-      tRangeWidget.textColor = new Color("ffffff", 0.8);
-    }
-
-    // 天气 END
-    //////////////////////////
+  
     weatherStack.addSpacer();
-    widget.addSpacer(6);
-
-    //////////////////////////
-    // AQI 日出 日落
-    const otherWeatherStack = widget.addStack();
-    otherWeatherStack.centerAlignContent();
-
-    // AQI
-    let aqiIcon = "aqi.medium";
-    if (weatherInfo.aqiValue <= 150) {
-      aqiIcon = "aqi.low";
-    } else if (weatherInfo.aqiValue < 200) {
-      aqiIcon = "aqi.medium";
-    } else {
-      aqiIcon = "aqi.high";
-    }
+    widget.addSpacer(3); // 行间距统一为3
+  
+    // 温度区间 + AQI（合并到一行）
+    const tempAqiStack = widget.addStack();
+    tempAqiStack.centerAlignContent();
+  
+    // 温度区间
+    let thermometerIcon = weatherInfo.maxTemperature > 30 ? "thermometer.high" : 
+                         weatherInfo.maxTemperature > 15 ? "thermometer.medium" : "thermometer.low";
+    const tRangeIcon = getSFSymbol(thermometerIcon);
+    let tRangeIconWidget = tempAqiStack.addImage(tRangeIcon);
+    tRangeIconWidget.imageSize = new Size(12, 12);
+    tRangeIconWidget.tintColor = new Color("ffffff", 0.8);
+    tempAqiStack.addSpacer(2);
+    let tRangeWidget = tempAqiStack.addText(
+      `${weatherInfo.minTemperature}°~${weatherInfo.maxTemperature}°`
+    );
+    tRangeWidget.font = Font.boldRoundedSystemFont(10);
+    tRangeWidget.textColor = new Color("ffffff", 0.8);
+  
+    // AQI（与温度区间间隔8pt）
+    tempAqiStack.addSpacer(8);
+    let aqiIcon = weatherInfo.aqiValue <= 150 ? "aqi.low" : 
+                  weatherInfo.aqiValue < 200 ? "aqi.medium" : "aqi.high";
     aqiImg = SFSymbol.named(aqiIcon).image;
-    const aqiImageElement = otherWeatherStack.addImage(aqiImg);
+    const aqiImageElement = tempAqiStack.addImage(aqiImg);
     aqiImageElement.imageSize = new Size(12, 12);
-    let aqiTintColor = new Color("ffffff", 0.9);
-    aqiImageElement.tintColor = aqiTintColor;
-
-    //
-    otherWeatherStack.addSpacer(4);
-
-    const aqiTextElement = otherWeatherStack.addText(`${weatherInfo.aqiValue}`);
-    aqiTextElement.lineLimit = 1;
-    aqiTextElement.font = Font.boldRoundedSystemFont(9);
+    aqiImageElement.tintColor = new Color("ffffff", 0.9);
+    tempAqiStack.addSpacer(4);
+    const aqiTextElement = tempAqiStack.addText(`${weatherInfo.aqiValue}`);
+    aqiTextElement.font = Font.boldRoundedSystemFont(10);
     aqiTextElement.textColor = new Color("ffffff", 0.8);
-
-    // 日出ico
-    otherWeatherStack.addSpacer(8);
-
-    sunriseImg = SFSymbol.named("sunrise.fill").image;
-    const sunriseImageElement = otherWeatherStack.addImage(sunriseImg)
+  
+    tempAqiStack.addSpacer();
+    widget.addSpacer(3); // 行间距统一为3
+  
+    // 日出日落（单独一行）
+    const sunTimeStack = widget.addStack();
+    sunTimeStack.centerAlignContent();
+  
+    // 日出
+    const sunriseImg = SFSymbol.named("sunrise.fill").image;
+    const sunriseImageElement = sunTimeStack.addImage(sunriseImg);
     sunriseImageElement.imageSize = new Size(14, 14);
-    let sunriseTintColor = new Color("ffffff", 0.8);
-    sunriseImageElement.tintColor = sunriseTintColor;
-
-    //
-    otherWeatherStack.addSpacer(4);
-
-    const sunriseTextElement = otherWeatherStack.addText(`${weatherInfo.sunrise}`);
-    sunriseTextElement.lineLimit = 1;
-    sunriseTextElement.font = Font.boldRoundedSystemFont(9);
+    sunriseImageElement.tintColor = new Color("ffffff", 0.8);
+    sunTimeStack.addSpacer(4);
+    const sunriseTextElement = sunTimeStack.addText(`${weatherInfo.sunrise}`);
+    sunriseTextElement.font = Font.boldRoundedSystemFont(10);
     sunriseTextElement.textColor = new Color("ffffff", 0.8);
-
-
-    // 日落ico
-    otherWeatherStack.addSpacer(6);
-    sunsetImg = SFSymbol.named("sunset.fill").image;
-    const sunsetImageElement = otherWeatherStack.addImage(sunsetImg)
+  
+    // 日落（与日出间隔3pt）
+    sunTimeStack.addSpacer(3);
+    const sunsetImg = SFSymbol.named("sunset.fill").image;
+    const sunsetImageElement = sunTimeStack.addImage(sunsetImg);
     sunsetImageElement.imageSize = new Size(14, 14);
-    let sunsetTintColor = new Color("ffffff", 0.8);
-    sunsetImageElement.tintColor = sunsetTintColor;
-
-    //
-    otherWeatherStack.addSpacer(4);
-
-    const sunsetTextElement = otherWeatherStack.addText(`${weatherInfo.sunset}`);
-    sunsetTextElement.lineLimit = 1;
-    sunsetTextElement.font = Font.boldRoundedSystemFont(9);
+    sunsetImageElement.tintColor = new Color("ffffff", 0.8);
+    sunTimeStack.addSpacer(4);
+    const sunsetTextElement = sunTimeStack.addText(`${weatherInfo.sunset}`);
+    sunsetTextElement.font = Font.boldRoundedSystemFont(10);
     sunsetTextElement.textColor = new Color("ffffff", 0.8);
-
-    otherWeatherStack.addSpacer();
-  } else {
+  
+    sunTimeStack.addSpacer();
+} else {
     const errStack = widget.addStack()
     errStack.layoutVertically()
     let errline1 = errStack.addText("🤔 获取天气信息失败")
@@ -296,137 +262,93 @@ async function renderLockscreenWidget() {
  **************************************************************************/
 
 /**
- * 获取彩云天气信息
+ * 获取Weather天气信息
  */
 async function getWeather(forceRefresh = false) {
-  // 获取位置
   let location = _config.location;
   location = await getLocation(_config.locale);
-  // 小时
-  const hour = new Date().getHours();
+  const url = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${location.latitude},${location.longitude}&days=1&aqi=yes&alerts=yes&lang=zh`;
 
-  // 彩云天气域名
-  const url = `https://api.caiyunapp.com/v2.6/${_config.apiKey}/${location.longitude},${location.latitude}/weather?alert=true`;
-  const weatherJsonData = await httpGet(url, true, null, "caiyunData", false, forceRefresh);
-  // console.log(weatherJsonData);
-  // 天气数据
+  const weatherJsonData = await httpGet(url, true, null, "weatherapiData", false, forceRefresh);
+
   let weatherInfo = {};
-  if (weatherJsonData.status == "ok") {
-    // log("天气数据请求成功");
-    // 天气突发预警
-    let alertWeather = weatherJsonData.result.alert.content;
-    if (alertWeather.length > 0) {
-      const alertWeatherTitle = alertWeather[0].title;
-      // log(`突发的天气预警==>${alertWeatherTitle}`);
-      weatherInfo.alertWeatherTitle = alertWeatherTitle;
-    }
-    if (weatherJsonData.status != 'ok') {
-      console.log(weatherJsonData);
-    }
+  if (weatherJsonData && weatherJsonData.location) {
+    const current = weatherJsonData.current;
+    const forecast = weatherJsonData.forecast.forecastday[0];
 
-    // 温度范围
-    const temperatureData = weatherJsonData.result.daily.temperature[0];
-    // 最低温度
-    const minTemperature = temperatureData.min;
-    // 最高温度
-    const maxTemperature = temperatureData.max;
-    weatherInfo.minTemperature =
-      Math.round(minTemperature);
-    weatherInfo.maxTemperature = Math.round(maxTemperature);
+    weatherInfo.temperature = Math.round(current.temp_c);
+    weatherInfo.bodyFeelingTemperature = Math.round(current.feelslike_c);
+    weatherInfo.minTemperature = Math.round(forecast.day.mintemp_c);
+    weatherInfo.maxTemperature = Math.round(forecast.day.maxtemp_c);
 
-    // 体感温度
-    const bodyFeelingTemperature =
-      weatherJsonData.result.realtime.apparent_temperature;
-    weatherInfo.bodyFeelingTemperature = Math.floor(bodyFeelingTemperature);
+    // 天气图标映射
+    const conditionCode = current.condition.code;
+    const isNight = current.is_day === 0;
+    weatherInfo.weatherIco = mapWeatherCode(conditionCode, isNight);
 
-    // 显示温度
-    const temperature = weatherJsonData.result.realtime.temperature;
-    weatherInfo.temperature = Math.floor(temperature);
+    weatherInfo.weatherDesc = current.condition.text;
+    weatherInfo.humidity = `${current.humidity}%`;
+    weatherInfo.aqiValue = current.air_quality ? Math.round(current.air_quality.pm2_5) : 0;
+    weatherInfo.aqiInfo = airQuality(weatherInfo.aqiValue);
 
-    // 天气状况 weatherIcos[weatherIco]
-    let weather = weatherJsonData.result.realtime.skycon;
+    weatherInfo.sunrise = forecast.astro.sunrise;
+    weatherInfo.sunset = forecast.astro.sunset;
 
-    let night = hour - 12 >= 7;
-    let nightCloudy = night && weather == "CLOUDY";
-    let nightLightHaze = night && weather == "LIGHT_HAZE";
-    let nightModerateHaze = night && weather == "MODERATE_HAZE";
-    let nightHeavyHaze = night && weather == "HEAVY_HAZE";
-    if (nightCloudy) {
-      weather = "CLOUDY_NIGHT";
-    }
-    if (nightLightHaze) {
-      weather = "LIGHT_HAZE_NIGHT";
-    }
-    if (nightModerateHaze) {
-      weather = "MODERATE_HAZE_NIGHT";
-    }
-    if (nightHeavyHaze) {
-      weather = "HEAVY_HAZE_NIGHT";
-    }
-    weatherInfo.weatherIco = weather;
-    // log(`天气：${weather}`);
-
-    // 天气描述
-    const weatherDesc = weatherJsonData.result.forecast_keypoint;
-    weatherInfo.weatherDesc = weatherDesc.replace("。还在加班么？", "，");
-    // log("天气预告==>" + weatherDesc)
-
-    // 相对湿度
-    const humidity =
-      Math.floor(weatherJsonData.result.realtime.humidity * 100) + "%";
-    weatherInfo.humidity = humidity;
-
-    // 舒适指数
-    const comfort = weatherJsonData.result.realtime.life_index.comfort.desc;
-    weatherInfo.comfort = comfort;
-    // log(`舒适指数：${comfort}`)
-
-    // 紫外线指数
-    const ultraviolet =
-      weatherJsonData.result.realtime.life_index.ultraviolet.desc;
-    weatherInfo.ultraviolet = ultraviolet;
-
-    // 空气质量
-    const aqi = weatherJsonData.result.realtime.air_quality.aqi.chn;
-    const aqiInfo = airQuality(aqi);
-    weatherInfo.aqiInfo = aqiInfo;
-    weatherInfo.aqiValue = aqi;
-    // 日出日落
-    const astro = weatherJsonData.result.daily.astro[0];
-    // 日出
-    const sunrise = astro.sunrise.time;
-    // 日落
-    const sunset = astro.sunset.time;
-    weatherInfo.sunrise = sunrise.toString();
-    weatherInfo.sunset = sunset.toString();
-
-    // 小时预告
-    let hourlyArr = [];
-    const hourlyData = weatherJsonData.result.hourly;
-    const temperatureArr = hourlyData.temperature;
-    const temperatureSkyconArr = hourlyData.skycon;
-    for (var i = 0; i < temperatureArr.length; i++) {
-      let hourlyObj = {};
-      hourlyObj.datetime = temperatureArr[i].datetime;
-      hourlyObj.temperature = Math.round(temperatureArr[i].value);
-
-      let weather = temperatureSkyconArr[i].value;
-      if (nightCloudy) {
-        weather = "CLOUDY_NIGHT";
-      }
-      hourlyObj.skycon = `${weather}`;
-      hourlyArr.push(hourlyObj);
-    }
-    //         weatherInfo.hourly = hourlyArr
-    console.log("=== weatherInfo ===");
-    console.log(weatherInfo);
+    // 可选：添加 hourly 信息（不改动原结构）
+    // console.log("=== weatherInfo ===", weatherInfo);
   } else {
-    log(`请求彩云天气出错：${weatherJsonData}`);
-    console.log(weatherJsonData)
-    //     getWeather()
+    console.log("请求 WeatherAPI 出错：", weatherJsonData);
   }
   return weatherInfo;
 }
+
+function mapWeatherCode(code, isNight) {
+  // 可根据 WeatherAPI 的 code 映射到 _config.weatherSFIcos 中的 key
+  const mapping = {
+    1000: isNight ? "CLEAR_NIGHT" : "CLEAR_DAY",
+    1003: isNight ? "PARTLY_CLOUDY_NIGHT" : "PARTLY_CLOUDY_DAY",
+    1006: "CLOUDY",
+    1009: "CLOUDY",
+    1030: "FOG",
+    1063: "LIGHT_RAIN",
+    1066: "LIGHT_SNOW",
+    1069: "LIGHT_SNOW",
+    1072: "LIGHT_HAZE",
+    1087: "STORM_RAIN",
+    1114: "LIGHT_SNOW",
+    1117: "HEAVY_SNOW",
+    1135: "FOG",
+    1147: "FOG",
+    1150: "LIGHT_RAIN",
+    1153: "LIGHT_RAIN",
+    1180: "LIGHT_RAIN",
+    1183: "LIGHT_RAIN",
+    1186: "MODERATE_RAIN",
+    1189: "MODERATE_RAIN",
+    1192: "HEAVY_RAIN",
+    1195: "HEAVY_RAIN",
+    1198: "MODERATE_RAIN",
+    1201: "HEAVY_RAIN",
+    1204: "LIGHT_SNOW",
+    1207: "MODERATE_SNOW",
+    1210: "LIGHT_SNOW",
+    1213: "LIGHT_SNOW",
+    1216: "MODERATE_SNOW",
+    1219: "MODERATE_SNOW",
+    1222: "HEAVY_SNOW",
+    1225: "HEAVY_SNOW",
+    1237: "LIGHT_SNOW",
+    1240: "LIGHT_RAIN",
+    1243: "MODERATE_RAIN",
+    1246: "STORM_RAIN",
+    1273: "STORM_RAIN",
+    1276: "STORM_RAIN",
+    1279: "STORM_SNOW",
+    1282: "STORM_SNOW",
+  };
+  return mapping[code] || "CLOUDY";
+}
+
 
 /**
  * 获取手机定位信息
